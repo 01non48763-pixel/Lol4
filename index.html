@@ -3,465 +3,374 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin - Barraquinha da Morena</title>
+  <title>Admin Completo - Barraquinha da Morena</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
     body { background: #eef7f1; color: #102a1c; padding: 16px; }
-    .box { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 18px; }
+    .box { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     h1 { font-size: 20px; color: #064e3b; margin-bottom: 10px; }
-    input { width: 100%; padding: 10px; border: 1px solid #bfd8c8; border-radius: 8px; margin-bottom: 10px; font-size: 15px; }
-    button { background: #047857; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-weight: bold; cursor: pointer; }
-    .pedido { border: 1px solid #cde3d5; border-radius: 10px; padding: 12px; margin-top: 12px; background: #f9fdfb; }
-    .erro { color: #b91c1c; font-weight: bold; margin-top: 8px; }
+    h2 { font-size: 16px; color: #064e3b; margin: 16px 0 8px; }
+    input, select { width: 100%; padding: 9px 10px; border: 1px solid #bfd8c8; border-radius: 8px; font-size: 14px; }
+    button { background: #047857; color: #fff; border: none; border-radius: 8px; padding: 9px 12px; font-weight: bold; cursor: pointer; font-size: 13px; }
+    button:active { background: #064e3b; }
+    .btn-pago { background: #b45309; }
+    .btn-entregue { background: #047857; }
+    .btn-pendente { background: #476657; }
+    .btn-remover { background: #b91c1c; }
+    .topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .abas { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .aba-ativa { background: #064e3b; outline: 2px solid #047857; }
+    .resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+    .resumo-card { background: #f9fdfb; border: 1px solid #cde3d5; border-radius: 10px; padding: 10px; text-align: center; }
+    .pedido, .item-preco { border: 1px solid #cde3d5; border-radius: 10px; padding: 12px; margin-top: 10px; background: #f9fdfb; }
+    .linha { margin-top: 5px; font-size: 14px; }
+    .detalhe-itens { margin-top: 8px; padding: 8px 10px; background: #ffffff; border-radius: 8px; border: 1px dashed #bfd8c8; font-size: 13px; }
+    .acoes { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .grid-add { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 8px; margin-top: 8px; }
+    .linha-preco { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .erro { color: #b91c1c; font-weight: bold; margin-top: 8px; font-size: 13px; }
+    .ok { color: #047857; font-weight: bold; margin-top: 8px; font-size: 13px; }
+    @media (max-width: 600px) {
+      .grid-add { grid-template-columns: 1fr; }
+      .resumo { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <div class="box" id="login">
+  <div class="box" id="telaLogin">
     <h1>Admin - Barraquinha da Morena</h1>
     <input type="password" id="pin" placeholder="Digite o PIN (1234)" />
     <button id="btnEntrar">Entrar</button>
-    <div class="erro" id="erroLogin"></div>
+    <div class="erro" id="erroPin"></div>
   </div>
 
-  <div class="box" id="painel" style="display:none;">
-    <h1>Pedidos Recebidos</h1>
-    <button id="btnAtualizar">Atualizar Agora</button>
-    <div id="pedidos">Carregando...</div>
+  <div class="box" id="telaAdmin" style="display:none;">
+    <div class="topo">
+      <h1>Painel Administrativo</h1>
+      <button id="btnAtualizar">Atualizar Tudo</button>
+    </div>
+
+    <div class="abas">
+      <button id="abaPedidos" class="aba-ativa">Pedidos Detalhados</button>
+      <button id="abaPrecos" style="background:#476657;">Preços (Verduras e Legumes)</button>
+    </div>
+
+    <div id="secaoPedidos">
+      <div class="resumo">
+        <div class="resumo-card">
+          <div>Pedidos Feitos</div>
+          <strong id="qtdFeitos">0</strong>
+        </div>
+        <div class="resumo-card">
+          <div>Pagos</div>
+          <strong id="qtdPagos">0</strong>
+        </div>
+        <div class="resumo-card">
+          <div>Entregues</div>
+          <strong id="qtdEntregues">0</strong>
+        </div>
+      </div>
+      <div id="listaPedidos">Carregando pedidos...</div>
+    </div>
+
+    <div id="secaoPrecos" style="display:none;">
+      <h2>Adicionar ou Atualizar Verdura / Legume</h2>
+      <div class="grid-add">
+        <input type="text" id="novoNome" placeholder="Ex: Cenoura, Cebola, Batata" />
+        <select id="novoTipo">
+          <option value="Legume">Legume</option>
+          <option value="Verdura">Verdura</option>
+        </select>
+        <input type="number" step="0.01" min="0" id="novoPreco" placeholder="Preço (ex: 1.00)" />
+        <button id="btnSalvarNovo">Salvar Item</button>
+      </div>
+      <div id="msgPreco"></div>
+      <div id="listaPrecos">Carregando itens...</div>
+    </div>
   </div>
 
   <script>
     const DB_URL = "https://barraquinha-49cdc-default-rtdb.firebaseio.com";
-    const PIN_CORRETO = "1234";
-    let timer = null;
+    const PIN = "1234";
+    let loopPedidos = null;
+
+    const PRECOS_PADRAO = {
+      tomate_teste: { nome: "Tomate Teste", categoria: "Legume", preco: 1.00 },
+      tomate: { nome: "Tomate", categoria: "Legume", preco: 4.00 },
+      cenoura: { nome: "Cenoura", categoria: "Legume", preco: 3.50 },
+      cebola: { nome: "Cebola", categoria: "Legume", preco: 3.00 },
+      batata: { nome: "Batata", categoria: "Legume", preco: 1.00 },
+      alface: { nome: "Alface", categoria: "Verdura", preco: 2.50 },
+      couve: { nome: "Couve", categoria: "Verdura", preco: 2.50 },
+      cheiro_verde: { nome: "Cheiro-verde", categoria: "Verdura", preco: 2.00 }
+    };
+
+    function formatarBRL(valor) {
+      const num = Number(valor) || 0;
+      return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    function slugify(texto) {
+      return texto
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_|_$/g, "");
+    }
 
     document.getElementById("btnEntrar").addEventListener("click", function () {
-      const pin = document.getElementById("pin").value.trim();
-      if (pin !== PIN_CORRETO) {
-        document.getElementById("erroLogin").textContent = "PIN errado. Use 1234.";
+      const digitado = document.getElementById("pin").value.trim();
+      if (digitado !== PIN) {
+        document.getElementById("erroPin").textContent = "PIN incorreto. Use 1234.";
         return;
       }
-      document.getElementById("erroLogin").textContent = "";
-      document.getElementById("login").style.display = "none";
-      document.getElementById("painel").style.display = "block";
-      buscarPedidos();
-      timer = setInterval(buscarPedidos, 4000);
+      document.getElementById("erroPin").textContent = "";
+      document.getElementById("telaLogin").style.display = "none";
+      document.getElementById("telaAdmin").style.display = "block";
+      carregarPedidos();
+      carregarPrecos();
+      loopPedidos = setInterval(carregarPedidos, 4000);
     });
 
-    document.getElementById("btnAtualizar").addEventListener("click", buscarPedidos);
+    document.getElementById("abaPedidos").addEventListener("click", function () {
+      document.getElementById("secaoPedidos").style.display = "block";
+      document.getElementById("secaoPrecos").style.display = "none";
+      document.getElementById("abaPedidos").classList.add("aba-ativa");
+      document.getElementById("abaPedidos").style.background = "#047857";
+      document.getElementById("abaPrecos").classList.remove("aba-ativa");
+      document.getElementById("abaPrecos").style.background = "#476657";
+      carregarPedidos();
+    });
 
-    async function buscarPedidos() {
-      const area = document.getElementById("pedidos");
+    document.getElementById("abaPrecos").addEventListener("click", function () {
+      document.getElementById("secaoPedidos").style.display = "none";
+      document.getElementById("secaoPrecos").style.display = "block";
+      document.getElementById("abaPrecos").classList.add("aba-ativa");
+      document.getElementById("abaPrecos").style.background = "#047857";
+      document.getElementById("abaPedidos").classList.remove("aba-ativa");
+      document.getElementById("abaPedidos").style.background = "#476657";
+      carregarPrecos();
+    });
+
+    document.getElementById("btnAtualizar").addEventListener("click", function () {
+      carregarPedidos();
+      carregarPrecos();
+    });
+
+    function montarDetalheItens(p) {
+      if (Array.isArray(p.itens) && p.itens.length > 0) {
+        let soma = 0;
+        const linhas = p.itens.map(function (it) {
+          const qtd = Number(it.qtd || it.quantidade || 1);
+          const unit = Number(it.precoUnitario || it.preco || 0);
+          const subtotal = Number(it.subtotal || (qtd * unit));
+          soma += subtotal;
+          return "<div>• " + (it.nome || it.item || "Item") + " — " + qtd + "x " + formatarBRL(unit) + " = <strong>" + formatarBRL(subtotal) + "</strong></div>";
+        }).join("");
+        return { html: linhas, totalCalculado: soma };
+      }
+
+      const itemUnico = p.item || "Tomate Teste";
+      const qtdUnica = Number(p.qtd || p.quantidade || 1);
+      const valorTexto = p.total || "R$ 1,00";
+      const numeroExtraido = Number(String(valorTexto).replace(/[^\d,.-]/g, "").replace(",", "."));
+      const totalNum = !isNaN(numeroExtraido) && numeroExtraido > 0 ? numeroExtraido : 1;
+      const unitNum = qtdUnica > 0 ? totalNum / qtdUnica : totalNum;
+
+      return {
+        html: "<div>• " + itemUnico + " — " + qtdUnica + "x " + formatarBRL(unitNum) + " = <strong>" + formatarBRL(totalNum) + "</strong></div>",
+        totalCalculado: totalNum
+      };
+    }
+
+    async function carregarPedidos() {
+      const area = document.getElementById("listaPedidos");
       try {
-        const resposta = await fetch(DB_URL + "/pedidos.json");
-        if (!resposta.ok) {
-          area.innerHTML = '<div class="erro">Erro HTTP: ' + resposta.status + '</div>';
+        const res = await fetch(DB_URL + "/pedidos.json");
+        if (!res.ok) {
+          area.innerHTML = '<div class="erro">Erro ao ler pedidos (' + res.status + ').</div>';
           return;
         }
-        const dados = await resposta.json();
+        const dados = await res.json();
         if (!dados) {
-          area.innerHTML = "<p>Nenhum pedido encontrado no Firebase.</p>";
+          document.getElementById("qtdFeitos").textContent = "0";
+          document.getElementById("qtdPagos").textContent = "0";
+          document.getElementById("qtdEntregues").textContent = "0";
+          area.innerHTML = "<p>Nenhum pedido feito até agora.</p>";
           return;
         }
 
         const chaves = Object.keys(dados).reverse();
-        area.innerHTML = chaves.map(function (chave) {
-          const p = dados[chave] || {};
+        let feitos = 0;
+        let pagos = 0;
+        let entregues = 0;
+
+        const html = chaves.map(function (idFirebase) {
+          const p = dados[idFirebase] || {};
+          const status = p.status || "Pedido feito";
+
+          if (status === "Pedido feito" || status === "Pendente") feitos++;
+          if (status === "Pago") pagos++;
+          if (status === "Entregue") entregues++;
+
+          const detalhe = montarDetalheItens(p);
+          const totalExibido = p.total || formatarBRL(detalhe.totalCalculado);
+
           return (
             '<div class="pedido">' +
-              '<div><strong>' + (p.id || chave) + '</strong> - ' + (p.cliente || "Sem nome") + '</div>' +
-              '<div>Item: ' + (p.item || "Tomate Teste") + ' | Total: ' + (p.total || "R$ 1,00") + '</div>' +
-              '<div>Endereço: ' + (p.endereco || "-") + '</div>' +
-              '<div>Status: <strong>' + (p.status || "Pendente") + '</strong></div>' +
-              '<div>Data: ' + (p.data || "") + '</div>' +
-              '<div style="margin-top:8px;">' +
-                '<button onclick="mudarStatus(\'' + chave + '\', \'Concluído\')">Concluir</button> ' +
-                '<button onclick="mudarStatus(\'' + chave + '\', \'Pendente\')" style="background:#476657;">Pendente</button>' +
+              '<div><strong>' + (p.id || idFirebase) + '</strong> — ' + (p.cliente || "Cliente") + '</div>' +
+              '<div class="linha"><strong>Endereço:</strong> ' + (p.endereco || "-") + '</div>' +
+              '<div class="linha"><strong>Situação:</strong> <strong>' + status + '</strong></div>' +
+              '<div class="detalhe-itens">' +
+                '<div><strong>Itens do pedido:</strong></div>' +
+                detalhe.html +
+                '<div style="margin-top:6px;"><strong>Total do pedido: ' + totalExibido + '</strong></div>' +
+              '</div>' +
+              '<div class="linha" style="font-size:12px;color:#476657;">' + (p.data || "") + '</div>' +
+              '<div class="acoes">' +
+                '<button class="btn-pendente" onclick="setStatus(\'' + idFirebase + '\', \'Pedido feito\')">Pedido feito</button>' +
+                '<button class="btn-pago" onclick="setStatus(\'' + idFirebase + '\', \'Pago\')">Pago</button>' +
+                '<button class="btn-entregue" onclick="setStatus(\'' + idFirebase + '\', \'Entregue\')">Entregue</button>' +
               '</div>' +
             '</div>'
           );
         }).join("");
-      } catch (err) {
-        area.innerHTML = '<div class="erro">Falha ao conectar no Firebase: ' + err.message + '</div>';
+
+        document.getElementById("qtdFeitos").textContent = String(feitos);
+        document.getElementById("qtdPagos").textContent = String(pagos);
+        document.getElementById("qtdEntregues").textContent = String(entregues);
+        area.innerHTML = html;
+      } catch (e) {
+        area.innerHTML = '<div class="erro">Erro de conexão ao carregar pedidos: ' + e.message + '</div>';
       }
     }
 
-    async function mudarStatus(chave, novoStatus) {
+    async function setStatus(idFirebase, novoStatus) {
       try {
-        const res = await fetch(DB_URL + "/pedidos/" + chave + ".json", {
+        const res = await fetch(DB_URL + "/pedidos/" + idFirebase + ".json", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: novoStatus })
         });
         if (res.ok) {
-          buscarPedidos();
+          carregarPedidos();
         } else {
-          alert("Erro ao atualizar status: " + res.status);
+          alert("Erro ao atualizar status (" + res.status + ").");
         }
-      } catch (err) {
-        alert("Erro de rede: " + err.message);
-      }
-    }
-  </script>
-</body>
-</html>
-te'} (${p.total || 'R$ 1,00'})</div>
-            <div class="info"><strong>Endereço:</strong> ${p.endereco || '-'}</div>
-            <div class="data">${p.data || ''}</div>
-            <div>
-              <button class="btn-sm" onclick="atualizarStatus('${p.key}', 'Concluído')">Marcar Concluído</button>
-              <button class="btn-sm" style="background:#476657;" onclick="atualizarStatus('${p.key}', 'Pendente')">Pendente</button>
-            </div>
-          </div>
-        `).join('');
       } catch (e) {
-        badge.textContent = 'Erro de conexão';
-        container.innerHTML = '<p class="err">Não foi possível carregar os pedidos do Firebase.</p>';
+        alert("Falha ao salvar status no Firebase.");
       }
     }
 
-    async function atualizarStatus(key, novoStatus) {
+    async function carregarPrecos() {
+      const lista = document.getElementById("listaPrecos");
       try {
-        await fetch(`${FIREBASE_URL}/pedidos/${key}.json`, {
-          method: 'PATCH',
-          body: JSON.stringify({ status: novoStatus })
-        });
-        carregarPedidos();
-      } catch (e) {
-        alert('Erro ao atualizar status do pedido.');
-      }
-    }
-  </script>
-</body>
-</html>
-top">
-          <div>
-            <div class="product-title">🍅 Tomate Teste</div>
-            <div class="product-sub">Unidade de teste • Valor unitário R$ 1,00</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="price">R$ 1,00</div>
-            <button type="button" class="btn btn-sm" style="margin-top:6px;" onclick="addItem()">+ Adicionar</button>
-          </div>
-        </div>
-
-        <div class="cart-box" id="cartBox">
-          <div class="line" style="color:#476657;">
-            <span>Nenhum item na cesta ainda.</span>
-            <span>R$ 0,00</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- DADOS E PAGAMENTO -->
-      <section class="product-card" aria-label="Dados e pagamento">
-        <div class="section-title">Dados do pedido</div>
-
-        <label for="clientName">Seu nome *</label>
-        <input type="text" id="clientName" placeholder="Ex.: Maria / Teste" />
-
-        <label for="clientAddress">Endereço de entrega *</label>
-        <input type="text" id="clientAddress" placeholder="Rua, número e bairro" />
-
-        <label for="payMethod">Forma de pagamento</label>
-        <select id="payMethod" onchange="togglePaymentFields()">
-          <option value="pix" selected>Pix</option>
-          <option value="credit">Cartão de Crédito</option>
-          <option value="debit">Cartão de Débito</option>
-          <option value="cash">Dinheiro</option>
-        </select>
-
-        <div id="cashBox" style="display:none;">
-          <label for="cashChange">Troco para quanto? (opcional)</label>
-          <input type="text" id="cashChange" placeholder="Ex.: R$ 10,00 ou sem troco" />
-        </div>
-
-        <div class="pix-box" id="pixBox">
-          <div><strong>Pix • Titular: Jefferson Vilar</strong></div>
-          <div class="pix-key-row">
-            <span id="pixKeyLabel">04856246216</span>
-            <button type="button" class="btn-copy" onclick="copyPixKey()">Copiar Chave</button>
-          </div>
-          <div class="pix-code" id="pixPayloadBox"></div>
-          <button type="button" class="btn btn-sm" onclick="copyPixPayload()">Copiar Pix Copia e Cola</button>
-        </div>
-
-        <button type="button" class="btn" style="margin-top:12px;" onclick="submitTestOrder()">Confirmar Pedido de Teste</button>
-
-        <div class="alert-err" id="errBox"></div>
-        <div class="alert-ok" id="okBox"></div>
-      </section>
-    </main>
-  </div>
-
-  <script>
-    (function () {
-      var UNIT_PRICE = 1.00;
-      var DELIVERY_FEE = 0.00;
-      var PIX_KEY = '04856246216';
-      var RECEIVER_NAME = 'Jefferson Vilar';
-      var qty = 0;
-
-      function formatBRL(value) {
-        return Number(value || 0).toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL'
-        });
-      }
-
-      function crc16(str) {
-        var crc = 0xFFFF;
-        for (var i = 0; i < str.length; i++) {
-          crc ^= str.charCodeAt(i) << 8;
-          for (var j = 0; j < 8; j++) {
-            if ((crc & 0x8000) !== 0) {
-              crc = (crc << 1) ^ 0x1021;
-            } else {
-              crc <<= 1;
-            }
-            crc &= 0xFFFF;
-          }
-        }
-        return crc.toString(16).toUpperCase().padStart(4, '0');
-      }
-
-      function emv(id, value) {
-        var s = String(value);
-        return id + String(s.length).padStart(2, '0') + s;
-      }
-
-      function getTotalAmount() {
-        var subtotal = qty * UNIT_PRICE;
-        return qty > 0 ? Number((subtotal + DELIVERY_FEE).toFixed(2)) : UNIT_PRICE;
-      }
-
-      function buildPixPayload(amount) {
-        var amt = (Number(amount) > 0 ? Number(amount) : UNIT_PRICE).toFixed(2);
-        var merchantAccount = emv('00', 'br.gov.bcb.pix') + emv('01', PIX_KEY);
-        var base =
-          emv('00', '01') +
-          emv('26', merchantAccount) +
-          emv('52', '0000') +
-          emv('53', '986') +
-          emv('54', amt) +
-          emv('58', 'BR') +
-          emv('59', 'JEFFERSON VILAR') +
-          emv('60', 'BRASIL') +
-          emv('62', emv('05', 'TESTEBM')) +
-          '6304';
-        return base + crc16(base);
-      }
-
-      function refreshPixDisplay() {
-        var amount = getTotalAmount();
-        var code = buildPixPayload(amount);
-        document.getElementById('pixPayloadBox').textContent =
-          'Pix Copia e Cola (' + formatBRL(amount) + '): ' + code;
-        return code;
-      }
-
-      function renderCart() {
-        var box = document.getElementById('cartBox');
-        if (qty <= 0) {
-          box.innerHTML =
-            '<div class="line" style="color:#476657;">' +
-              '<span>Nenhum item na cesta ainda.</span>' +
-              '<span>R$ 0,00</span>' +
-            '</div>';
-          refreshPixDisplay();
+        const res = await fetch(DB_URL + "/produtos.json");
+        if (!res.ok) {
+          lista.innerHTML = '<div class="erro">Erro ao carregar preços (' + res.status + ').</div>';
           return;
         }
-
-        var subtotal = qty * UNIT_PRICE;
-        var total = subtotal + DELIVERY_FEE;
-
-        box.innerHTML =
-          '<div class="line">' +
-            '<span><strong>' + qty + 'x</strong> Tomate Teste (' + formatBRL(UNIT_PRICE) + ')</span>' +
-            '<div class="qty-controls">' +
-              '<button type="button" class="btn btn-sm" onclick="changeItemQty(-1)">-</button>' +
-              '<strong>' + qty + '</strong>' +
-              '<button type="button" class="btn btn-sm" onclick="changeItemQty(1)">+</button>' +
-            '</div>' +
-          '</div>' +
-          '<div class="line" style="color:#476657;">' +
-            '<span>Taxa de entrega</span>' +
-            '<span>' + formatBRL(DELIVERY_FEE) + '</span>' +
-          '</div>' +
-          '<div class="line total-line">' +
-            '<span>Total</span>' +
-            '<span>' + formatBRL(total) + '</span>' +
-          '</div>';
-
-        refreshPixDisplay();
-      }
-
-      function copyToClipboard(text, message) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).catch(function () {});
-        }
-        showOk(message);
-      }
-
-      function showError(msg) {
-        var err = document.getElementById('errBox');
-        var ok = document.getElementById('okBox');
-        ok.style.display = 'none';
-        err.textContent = msg;
-        err.style.display = 'block';
-      }
-
-      function showOk(html) {
-        var err = document.getElementById('errBox');
-        var ok = document.getElementById('okBox');
-        err.style.display = 'none';
-        ok.innerHTML = html;
-        ok.style.display = 'block';
-      }
-
-      window.addItem = function () {
-        qty += 1;
-        renderCart();
-      };
-
-      window.changeItemQty = function (delta) {
-        qty = Math.max(0, qty + delta);
-        renderCart();
-      };
-
-      window.togglePaymentFields = function () {
-        var method = document.getElementById('payMethod').value;
-        document.getElementById('pixBox').style.display = method === 'pix' ? 'flex' : 'none';
-        document.getElementById('cashBox').style.display = method === 'cash' ? 'block' : 'none';
-      };
-
-      window.copyPixKey = function () {
-        copyToClipboard(PIX_KEY, 'Chave Pix <strong>' + PIX_KEY + '</strong> (' + RECEIVER_NAME + ') copiada!');
-      };
-
-      window.copyPixPayload = function () {
-        var code = refreshPixDisplay();
-        copyToClipboard(code, 'Código Pix Copia e Cola copiado!<br><span style="font-size:11px;font-weight:normal;word-break:break-all;">' + code + '</span>');
-      };
-
-      window.submitTestOrder = function () {
-        var name = document.getElementById('clientName').value.trim();
-        var address = document.getElementById('clientAddress').value.trim();
-        var method = document.getElementById('payMethod').value;
-        var change = document.getElementById('cashChange').value.trim();
-
-        if (qty <= 0) {
-          showError('Adicione pelo menos 1 Tomate Teste antes de confirmar.');
-          return;
-        }
-        if (!name) {
-          showError('Digite o nome para o teste.');
-          return;
-        }
-        if (!address) {
-          showError('Digite o endereço de entrega para o teste.');
-          return;
-        }
-
-        var total = qty * UNIT_PRICE + DELIVERY_FEE;
-        var orderId = 'BM-' + String(Date.now()).slice(-5);
-
-        try {
-          var existing = JSON.parse(localStorage.getItem('barraquinhaMorena_orders_v1') || '[]');
-          if (!Array.isArray(existing)) existing = [];
-          existing.unshift({
-            id: orderId,
-            customerName: name,
-            customerAddress: address,
-            items: [{ name: 'Tomate Teste', unitLabel: 'unidade', qty: qty, unitPrice: UNIT_PRICE }],
-            subtotal: qty * UNIT_PRICE,
-            deliveryFee: DELIVERY_FEE,
-            total: total,
-            paymentMethod: method,
-            paymentStatus: 'Pendente',
-            pixKey: PIX_KEY,
-            receiverName: RECEIVER_NAME
+        let produtos = await res.json();
+        if (!produtos) {
+          produtos = PRECOS_PADRAO;
+          await fetch(DB_URL + "/produtos.json", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(produtos)
           });
-          localStorage.setItem('barraquinhaMorena_orders_v1', JSON.stringify(existing));
-        } catch (e) {}
+        }
 
-        var payText = method === 'pix'
-          ? 'Pix para ' + RECEIVER_NAME + ' (chave ' + PIX_KEY + ')<br><span style="font-size:11px;font-weight:normal;word-break:break-all;">Copia e Cola: ' + buildPixPayload(total) + '</span>'
-          : method === 'cash'
-          ? 'Dinheiro' + (change ? ' (Troco para ' + change + ')' : '')
-          : method === 'credit'
-          ? 'Cartão de Crédito'
-          : 'Cartão de Débito';
+        const chaves = Object.keys(produtos);
+        lista.innerHTML = chaves.map(function (chave) {
+          const item = produtos[chave] || {};
+          const precoAtual = Number(item.preco || 0).toFixed(2);
+          return (
+            '<div class="item-preco">' +
+              '<div class="linha-preco">' +
+                '<div><strong>' + (item.nome || chave) + '</strong> (' + (item.categoria || "Item") + ')</div>' +
+                '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
+                  '<input type="number" step="0.01" min="0" id="preco_' + chave + '" value="' + precoAtual + '" style="width:105px;" />' +
+                  '<button onclick="salvarPrecoExistente(\'' + chave + '\')">Salvar</button>' +
+                  '<button class="btn-remover" onclick="removerProduto(\'' + chave + '\')">Excluir</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join("");
+      } catch (e) {
+        lista.innerHTML = '<div class="erro">Erro ao carregar tabela de preços: ' + e.message + '</div>';
+      }
+    }
 
-        showOk(
-          'Pedido #' + orderId + ' registrado!<br>' +
-          'Cliente: ' + name + ' • Endereço: ' + address + '<br>' +
-          'Total: ' + formatBRL(total) + ' (Entrega R$ 0,00)<br>' +
-          'Pagamento: ' + payText
-        );
-      };
+    document.getElementById("btnSalvarNovo").addEventListener("click", async function () {
+      const nome = document.getElementById("novoNome").value.trim();
+      const categoria = document.getElementById("novoTipo").value;
+      const preco = Number(document.getElementById("novoPreco").value);
+      const msg = document.getElementById("msgPreco");
 
-      renderCart();
-      togglePaymentFields();
-    })();
+      if (!nome || isNaN(preco) || preco < 0) {
+        msg.innerHTML = '<div class="erro">Informe um nome válido e um preço (ex: 1.00 ou 2.50).</div>';
+        return;
+      }
+
+      const id = slugify(nome) || ("item_" + Date.now());
+      try {
+        const res = await fetch(DB_URL + "/produtos/" + id + ".json", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nome: nome, categoria: categoria, preco: preco })
+        });
+        if (res.ok) {
+          document.getElementById("novoNome").value = "";
+          document.getElementById("novoPreco").value = "";
+          msg.innerHTML = '<div class="ok">Salvo: ' + nome + ' por ' + formatarBRL(preco) + '.</div>';
+          carregarPrecos();
+        } else {
+          msg.innerHTML = '<div class="erro">Não foi possível salvar (' + res.status + ').</div>';
+        }
+      } catch (e) {
+        msg.innerHTML = '<div class="erro">Erro de conexão ao salvar item.</div>';
+      }
+    });
+
+    async function salvarPrecoExistente(chave) {
+      const campo = document.getElementById("preco_" + chave);
+      const msg = document.getElementById("msgPreco");
+      const novoPreco = Number(campo.value);
+      if (isNaN(novoPreco) || novoPreco < 0) {
+        msg.innerHTML = '<div class="erro">Digite um valor válido.</div>';
+        return;
+      }
+      try {
+        const res = await fetch(DB_URL + "/produtos/" + chave + ".json", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ preco: novoPreco })
+        });
+        if (res.ok) {
+          msg.innerHTML = '<div class="ok">Preço atualizado para ' + formatarBRL(novoPreco) + '.</div>';
+          carregarPrecos();
+        } else {
+          msg.innerHTML = '<div class="erro">Erro ao atualizar preço (' + res.status + ').</div>';
+        }
+      } catch (e) {
+        msg.innerHTML = '<div class="erro">Erro de conexão ao atualizar preço.</div>';
+      }
+    }
+
+    async function removerProduto(chave) {
+      try {
+        await fetch(DB_URL + "/produtos/" + chave + ".json", { method: "DELETE" });
+        carregarPrecos();
+      } catch (e) {
+        alert("Erro ao excluir item.");
+      }
+    }
   </script>
 </body>
 </html>
--radius: 13px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .secondary-btn {
-      width: 100%;
-      background: var(--fundo-suave);
-      color: var(--verde-escuro);
-      font-weight: 700;
-      font-size: 14px;
-      padding: 11px 14px;
-      border-radius: 12px;
-    }
-
-    .error-banner {
-      background: var(--perigo-bg);
-      color: var(--perigo-texto);
-      font-size: 12.5px;
-      font-weight: 700;
-      padding: 9px 12px;
-      border-radius: 10px;
-    }
-
-    /* TELA DE CONFIRMAÇÃO PIX / PEDIDO */
-    .qr-wrapper {
-      background: #ffffff;
-      border: 1px solid var(--borda-suave);
-      border-radius: 16px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      text-align: center;
-    }
-
-    .qr-svg-box {
-      width: 184px;
-      height: 184px;
-      padding: 8px;
-      border: 1px solid var(--borda-suave);
-      border-radius: 12px;
-      background: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .toast {
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
+%);
       z-index: 90;
       background: var(--verde-escuro);
       color: #ffffff;
