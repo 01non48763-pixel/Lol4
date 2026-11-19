@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Barraquinha da Morena</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background: #eef7f1; color: #102a1c; padding: 16px; }
+    .box { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 18px; }
+    h1 { font-size: 20px; color: #064e3b; margin-bottom: 10px; }
+    input { width: 100%; padding: 10px; border: 1px solid #bfd8c8; border-radius: 8px; margin-bottom: 10px; font-size: 15px; }
+    button { background: #047857; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-weight: bold; cursor: pointer; }
+    .pedido { border: 1px solid #cde3d5; border-radius: 10px; padding: 12px; margin-top: 12px; background: #f9fdfb; }
+    .erro { color: #b91c1c; font-weight: bold; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="box" id="login">
+    <h1>Admin - Barraquinha da Morena</h1>
+    <input type="password" id="pin" placeholder="Digite o PIN (1234)" />
+    <button id="btnEntrar">Entrar</button>
+    <div class="erro" id="erroLogin"></div>
+  </div>
+
+  <div class="box" id="painel" style="display:none;">
+    <h1>Pedidos Recebidos</h1>
+    <button id="btnAtualizar">Atualizar Agora</button>
+    <div id="pedidos">Carregando...</div>
+  </div>
+
+  <script>
+    const DB_URL = "https://barraquinha-49cdc-default-rtdb.firebaseio.com";
+    const PIN_CORRETO = "1234";
+    let timer = null;
+
+    document.getElementById("btnEntrar").addEventListener("click", function () {
+      const pin = document.getElementById("pin").value.trim();
+      if (pin !== PIN_CORRETO) {
+        document.getElementById("erroLogin").textContent = "PIN errado. Use 1234.";
+        return;
+      }
+      document.getElementById("erroLogin").textContent = "";
+      document.getElementById("login").style.display = "none";
+      document.getElementById("painel").style.display = "block";
+      buscarPedidos();
+      timer = setInterval(buscarPedidos, 4000);
+    });
+
+    document.getElementById("btnAtualizar").addEventListener("click", buscarPedidos);
+
+    async function buscarPedidos() {
+      const area = document.getElementById("pedidos");
+      try {
+        const resposta = await fetch(DB_URL + "/pedidos.json");
+        if (!resposta.ok) {
+          area.innerHTML = '<div class="erro">Erro HTTP: ' + resposta.status + '</div>';
+          return;
+        }
+        const dados = await resposta.json();
+        if (!dados) {
+          area.innerHTML = "<p>Nenhum pedido encontrado no Firebase.</p>";
+          return;
+        }
+
+        const chaves = Object.keys(dados).reverse();
+        area.innerHTML = chaves.map(function (chave) {
+          const p = dados[chave] || {};
+          return (
+            '<div class="pedido">' +
+              '<div><strong>' + (p.id || chave) + '</strong> - ' + (p.cliente || "Sem nome") + '</div>' +
+              '<div>Item: ' + (p.item || "Tomate Teste") + ' | Total: ' + (p.total || "R$ 1,00") + '</div>' +
+              '<div>Endereço: ' + (p.endereco || "-") + '</div>' +
+              '<div>Status: <strong>' + (p.status || "Pendente") + '</strong></div>' +
+              '<div>Data: ' + (p.data || "") + '</div>' +
+              '<div style="margin-top:8px;">' +
+                '<button onclick="mudarStatus(\'' + chave + '\', \'Concluído\')">Concluir</button> ' +
+                '<button onclick="mudarStatus(\'' + chave + '\', \'Pendente\')" style="background:#476657;">Pendente</button>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join("");
+      } catch (err) {
+        area.innerHTML = '<div class="erro">Falha ao conectar no Firebase: ' + err.message + '</div>';
+      }
+    }
+
+    async function mudarStatus(chave, novoStatus) {
+      try {
+        const res = await fetch(DB_URL + "/pedidos/" + chave + ".json", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: novoStatus })
+        });
+        if (res.ok) {
+          buscarPedidos();
+        } else {
+          alert("Erro ao atualizar status: " + res.status);
+        }
+      } catch (err) {
+        alert("Erro de rede: " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
+te'} (${p.total || 'R$ 1,00'})</div>
+            <div class="info"><strong>Endereço:</strong> ${p.endereco || '-'}</div>
+            <div class="data">${p.data || ''}</div>
+            <div>
+              <button class="btn-sm" onclick="atualizarStatus('${p.key}', 'Concluído')">Marcar Concluído</button>
+              <button class="btn-sm" style="background:#476657;" onclick="atualizarStatus('${p.key}', 'Pendente')">Pendente</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        badge.textContent = 'Erro de conexão';
+        container.innerHTML = '<p class="err">Não foi possível carregar os pedidos do Firebase.</p>';
+      }
+    }
+
+    async function atualizarStatus(key, novoStatus) {
+      try {
+        await fetch(`${FIREBASE_URL}/pedidos/${key}.json`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: novoStatus })
+        });
+        carregarPedidos();
+      } catch (e) {
+        alert('Erro ao atualizar status do pedido.');
+      }
+    }
+  </script>
+</body>
+</html>
+top">
+          <div>
+            <div class="product-title">🍅 Tomate Teste</div>
+            <div class="product-sub">Unidade de teste • Valor unitário R$ 1,00</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="price">R$ 1,00</div>
+            <button type="button" class="btn btn-sm" style="margin-top:6px;" onclick="addItem()">+ Adicionar</button>
+          </div>
+        </div>
+
+        <div class="cart-box" id="cartBox">
+          <div class="line" style="color:#476657;">
+            <span>Nenhum item na cesta ainda.</span>
+            <span>R$ 0,00</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- DADOS E PAGAMENTO -->
+      <section class="product-card" aria-label="Dados e pagamento">
+        <div class="section-title">Dados do pedido</div>
+
+        <label for="clientName">Seu nome *</label>
+        <input type="text" id="clientName" placeholder="Ex.: Maria / Teste" />
+
+        <label for="clientAddress">Endereço de entrega *</label>
+        <input type="text" id="clientAddress" placeholder="Rua, número e bairro" />
+
+        <label for="payMethod">Forma de pagamento</label>
+        <select id="payMethod" onchange="togglePaymentFields()">
+          <option value="pix" selected>Pix</option>
+          <option value="credit">Cartão de Crédito</option>
+          <option value="debit">Cartão de Débito</option>
+          <option value="cash">Dinheiro</option>
+        </select>
+
+        <div id="cashBox" style="display:none;">
+          <label for="cashChange">Troco para quanto? (opcional)</label>
+          <input type="text" id="cashChange" placeholder="Ex.: R$ 10,00 ou sem troco" />
+        </div>
+
+        <div class="pix-box" id="pixBox">
+          <div><strong>Pix • Titular: Jefferson Vilar</strong></div>
+          <div class="pix-key-row">
+            <span id="pixKeyLabel">04856246216</span>
+            <button type="button" class="btn-copy" onclick="copyPixKey()">Copiar Chave</button>
+          </div>
+          <div class="pix-code" id="pixPayloadBox"></div>
+          <button type="button" class="btn btn-sm" onclick="copyPixPayload()">Copiar Pix Copia e Cola</button>
+        </div>
+
+        <button type="button" class="btn" style="margin-top:12px;" onclick="submitTestOrder()">Confirmar Pedido de Teste</button>
+
+        <div class="alert-err" id="errBox"></div>
+        <div class="alert-ok" id="okBox"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var UNIT_PRICE = 1.00;
+      var DELIVERY_FEE = 0.00;
+      var PIX_KEY = '04856246216';
+      var RECEIVER_NAME = 'Jefferson Vilar';
+      var qty = 0;
+
+      function formatBRL(value) {
+        return Number(value || 0).toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        });
+      }
+
+      function crc16(str) {
+        var crc = 0xFFFF;
+        for (var i = 0; i < str.length; i++) {
+          crc ^= str.charCodeAt(i) << 8;
+          for (var j = 0; j < 8; j++) {
+            if ((crc & 0x8000) !== 0) {
+              crc = (crc << 1) ^ 0x1021;
+            } else {
+              crc <<= 1;
+            }
+            crc &= 0xFFFF;
+          }
+        }
+        return crc.toString(16).toUpperCase().padStart(4, '0');
+      }
+
+      function emv(id, value) {
+        var s = String(value);
+        return id + String(s.length).padStart(2, '0') + s;
+      }
+
+      function getTotalAmount() {
+        var subtotal = qty * UNIT_PRICE;
+        return qty > 0 ? Number((subtotal + DELIVERY_FEE).toFixed(2)) : UNIT_PRICE;
+      }
+
+      function buildPixPayload(amount) {
+        var amt = (Number(amount) > 0 ? Number(amount) : UNIT_PRICE).toFixed(2);
+        var merchantAccount = emv('00', 'br.gov.bcb.pix') + emv('01', PIX_KEY);
+        var base =
+          emv('00', '01') +
+          emv('26', merchantAccount) +
+          emv('52', '0000') +
+          emv('53', '986') +
+          emv('54', amt) +
+          emv('58', 'BR') +
+          emv('59', 'JEFFERSON VILAR') +
+          emv('60', 'BRASIL') +
+          emv('62', emv('05', 'TESTEBM')) +
+          '6304';
+        return base + crc16(base);
+      }
+
+      function refreshPixDisplay() {
+        var amount = getTotalAmount();
+        var code = buildPixPayload(amount);
+        document.getElementById('pixPayloadBox').textContent =
+          'Pix Copia e Cola (' + formatBRL(amount) + '): ' + code;
+        return code;
+      }
+
+      function renderCart() {
+        var box = document.getElementById('cartBox');
+        if (qty <= 0) {
+          box.innerHTML =
+            '<div class="line" style="color:#476657;">' +
+              '<span>Nenhum item na cesta ainda.</span>' +
+              '<span>R$ 0,00</span>' +
+            '</div>';
+          refreshPixDisplay();
+          return;
+        }
+
+        var subtotal = qty * UNIT_PRICE;
+        var total = subtotal + DELIVERY_FEE;
+
+        box.innerHTML =
+          '<div class="line">' +
+            '<span><strong>' + qty + 'x</strong> Tomate Teste (' + formatBRL(UNIT_PRICE) + ')</span>' +
+            '<div class="qty-controls">' +
+              '<button type="button" class="btn btn-sm" onclick="changeItemQty(-1)">-</button>' +
+              '<strong>' + qty + '</strong>' +
+              '<button type="button" class="btn btn-sm" onclick="changeItemQty(1)">+</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="line" style="color:#476657;">' +
+            '<span>Taxa de entrega</span>' +
+            '<span>' + formatBRL(DELIVERY_FEE) + '</span>' +
+          '</div>' +
+          '<div class="line total-line">' +
+            '<span>Total</span>' +
+            '<span>' + formatBRL(total) + '</span>' +
+          '</div>';
+
+        refreshPixDisplay();
+      }
+
+      function copyToClipboard(text, message) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).catch(function () {});
+        }
+        showOk(message);
+      }
+
+      function showError(msg) {
+        var err = document.getElementById('errBox');
+        var ok = document.getElementById('okBox');
+        ok.style.display = 'none';
+        err.textContent = msg;
+        err.style.display = 'block';
+      }
+
+      function showOk(html) {
+        var err = document.getElementById('errBox');
+        var ok = document.getElementById('okBox');
+        err.style.display = 'none';
+        ok.innerHTML = html;
+        ok.style.display = 'block';
+      }
+
+      window.addItem = function () {
+        qty += 1;
+        renderCart();
+      };
+
+      window.changeItemQty = function (delta) {
+        qty = Math.max(0, qty + delta);
+        renderCart();
+      };
+
+      window.togglePaymentFields = function () {
+        var method = document.getElementById('payMethod').value;
+        document.getElementById('pixBox').style.display = method === 'pix' ? 'flex' : 'none';
+        document.getElementById('cashBox').style.display = method === 'cash' ? 'block' : 'none';
+      };
+
+      window.copyPixKey = function () {
+        copyToClipboard(PIX_KEY, 'Chave Pix <strong>' + PIX_KEY + '</strong> (' + RECEIVER_NAME + ') copiada!');
+      };
+
+      window.copyPixPayload = function () {
+        var code = refreshPixDisplay();
+        copyToClipboard(code, 'Código Pix Copia e Cola copiado!<br><span style="font-size:11px;font-weight:normal;word-break:break-all;">' + code + '</span>');
+      };
+
+      window.submitTestOrder = function () {
+        var name = document.getElementById('clientName').value.trim();
+        var address = document.getElementById('clientAddress').value.trim();
+        var method = document.getElementById('payMethod').value;
+        var change = document.getElementById('cashChange').value.trim();
+
+        if (qty <= 0) {
+          showError('Adicione pelo menos 1 Tomate Teste antes de confirmar.');
+          return;
+        }
+        if (!name) {
+          showError('Digite o nome para o teste.');
+          return;
+        }
+        if (!address) {
+          showError('Digite o endereço de entrega para o teste.');
+          return;
+        }
+
+        var total = qty * UNIT_PRICE + DELIVERY_FEE;
+        var orderId = 'BM-' + String(Date.now()).slice(-5);
+
+        try {
+          var existing = JSON.parse(localStorage.getItem('barraquinhaMorena_orders_v1') || '[]');
+          if (!Array.isArray(existing)) existing = [];
+          existing.unshift({
+            id: orderId,
+            customerName: name,
+            customerAddress: address,
+            items: [{ name: 'Tomate Teste', unitLabel: 'unidade', qty: qty, unitPrice: UNIT_PRICE }],
+            subtotal: qty * UNIT_PRICE,
+            deliveryFee: DELIVERY_FEE,
+            total: total,
+            paymentMethod: method,
+            paymentStatus: 'Pendente',
+            pixKey: PIX_KEY,
+            receiverName: RECEIVER_NAME
+          });
+          localStorage.setItem('barraquinhaMorena_orders_v1', JSON.stringify(existing));
+        } catch (e) {}
+
+        var payText = method === 'pix'
+          ? 'Pix para ' + RECEIVER_NAME + ' (chave ' + PIX_KEY + ')<br><span style="font-size:11px;font-weight:normal;word-break:break-all;">Copia e Cola: ' + buildPixPayload(total) + '</span>'
+          : method === 'cash'
+          ? 'Dinheiro' + (change ? ' (Troco para ' + change + ')' : '')
+          : method === 'credit'
+          ? 'Cartão de Crédito'
+          : 'Cartão de Débito';
+
+        showOk(
+          'Pedido #' + orderId + ' registrado!<br>' +
+          'Cliente: ' + name + ' • Endereço: ' + address + '<br>' +
+          'Total: ' + formatBRL(total) + ' (Entrega R$ 0,00)<br>' +
+          'Pagamento: ' + payText
+        );
+      };
+
+      renderCart();
+      togglePaymentFields();
+    })();
+  </script>
+</body>
+</html>
+-radius: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .secondary-btn {
+      width: 100%;
+      background: var(--fundo-suave);
+      color: var(--verde-escuro);
+      font-weight: 700;
+      font-size: 14px;
+      padding: 11px 14px;
+      border-radius: 12px;
+    }
+
+    .error-banner {
+      background: var(--perigo-bg);
+      color: var(--perigo-texto);
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 9px 12px;
+      border-radius: 10px;
+    }
+
+    /* TELA DE CONFIRMAÇÃO PIX / PEDIDO */
+    .qr-wrapper {
+      background: #ffffff;
+      border: 1px solid var(--borda-suave);
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .qr-svg-box {
+      width: 184px;
+      height: 184px;
+      padding: 8px;
+      border: 1px solid var(--borda-suave);
+      border-radius: 12px;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .toast {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 90;
+      background: var(--verde-escuro);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 999px;
+      box-shadow: var(--sombra-forte);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPO -->
+  <header class="app-header">
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">🥬</div>
+        <div class="brand-text">
+          <h1 id="storeTitle">Barraquinha da Morena</h1>
+          <p id="storeSubtitle">Verduras e legumes frescos colhidos no dia</p>
+        </div>
+      </div>
+      <button type="button" class="cart-top-btn" id="openCartTopBtn" aria-label="Abrir cesta">
+        <span>🛒 Cesta</span>
+        <span class="cart-badge" id="topCartBadge">0</span>
+      </button>
+    </div>
+    <div class="search-wrap">
+      <input
+        type="search"
+        id="searchInput"
+        class="search-input"
+        placeholder="Buscar verdura, legume, tempero ou kit..."
+        autocomplete="off"
+      />
+      <button type="button" id="clearSearchBtn" class="search-clear hidden" aria-label="Limpar busca">✕</button>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO -->
+  <main class="container">
+    <div class="info-strip">
+      <span class="status-pill"><span class="status-dot"></span> Banca aberta para pedidos</span>
+      <span class="delivery-info" id="deliveryFeeBanner">Taxa de entrega: R$ 0,00</span>
+    </div>
+
+    <nav class="categories-bar" id="categoriesBar" aria-label="Categorias"></nav>
+
+    <section class="products-grid" id="productsGrid" aria-live="polite"></section>
+  </main>
+
+  <!-- BARRA FLUTUANTE DA CESTA -->
+  <div class="floating-cart hidden" id="floatingCart">
+    <button type="button" class="floating-cart-btn" id="openCartBottomBtn">
+      <div class="floating-cart-left">
+        <span class="floating-count" id="bottomCartCount">0 itens</span>
+        <span>Ver minha cesta</span>
+      </div>
+      <span id="bottomCartTotal">R$ 0,00</span>
+    </button>
+  </div>
+
+  <!-- MODAL DA CESTA E CHECKOUT -->
+  <div class="overlay hidden" id="cartOverlay" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet">
+      <div class="sheet-header">
+        <h2 id="sheetTitle">Minha Cesta</h2>
+        <button type="button" class="close-btn" id="closeCartBtn" aria-label="Fechar">✕</button>
+      </div>
+
+      <div class="sheet-body" id="sheetBody"></div>
+
+      <div class="sheet-footer" id="sheetFooter"></div>
+    </div>
+  </div>
+
+  <!-- AVISO RÁPIDO -->
+  <div class="toast hidden" id="toastMsg"></div>
+
+  <script>
+    (function () {
+      const STORAGE_KEYS = {
+        PRODUCTS: 'barraquinhaMorena_products_v1',
+        ORDERS: 'barraquinhaMorena_orders_v1',
+        CONFIG: 'barraquinhaMorena_config_v1'
+      };
+
+      const CATEGORIES = [
+        'Todos',
+        'Folhosas',
+        'Raízes e Tubérculos',
+        'Legumes',
+        'Temperos e Cheiro-Verde',
+        'Kits da Semana'
+      ];
+
+      const DEFAULT_CONFIG = {
+        storeName: 'Barraquinha da Morena',
+        subtitle: 'Verduras e legumes frescos colhidos no dia',
+        whatsapp: '',
+        deliveryFee: 0.00,
+        pixKey: '04856246216',
+        receiverName: 'Jefferson Vilar',
+        receiverBank: '',
+        paymentLink: '',
+        maxCreditInstallments: 3,
+        methods: {
+          pix: true,
+          credit: true,
+          debit: true,
+          cash: true
+        }
+      };
+
+      const DEFAULT_PRODUCTS = [
+        {
+          id: 'prod-teste-01',
+          name: 'Tomate Cereja Teste (1 centavo)',
+       </html><html>
+
+</html><html>
+
+</html><html>
+
+</html>
